@@ -1,0 +1,514 @@
+---
+title: "Logistic Regression Business Case (Proactive Attrition Management)"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Inpoting the Data set##
+```{r}
+Dataset<-read.csv("Proactive Attrition Management-Logistic Regression Case Study.csv")
+View(Dataset)
+```
+
+## To get the all column names ##
+```{r}
+colnames(Dataset)
+```
+#Spliting the data into two datasets Numerical dataset variables and categorical dataset variables and removing unnessary variables from the Dataset.
+
+## Selecting only categorical variables or features and create a new dataset named 'Dataset_cat' ##
+```{r}
+#Categorical Variables
+library(dplyr)
+Dataset_cat=data.frame(Dataset%>%select_("CHURN","UNIQSUBS","ACTVSUBS","PHONES","CHILDREN","CREDITA","CREDITAA","CREDITB","CREDITC","CREDITDE","CREDITGY","CREDITZ","PRIZMRUR","PRIZMUB","PRIZMTWN","REFURB","WEBCAP","TRUCK","RV","OCCPROF","OCCCLER","OCCCRFT","OCCSTUD",  "OCCHMKR","OCCRET","OCCSELF","OWNRENT","MARRYUN","MARRYYES","MARRYNO","MAILORD","MAILRES",  "MAILFLAG","TRAVEL","PCOWN","CREDITCD","RETCALLS","RETACCPT","NEWCELLY","NEWCELLN","REFER","INCMISS","INCOME","MCYCLE","CREDITAD","SETPRCM","RETCALL","CALIBRAT"))
+head(Dataset_cat,5)
+```
+
+##Creating numerical variables dataset ##
+```{r}
+#Numerical Variables
+Dataset_num=Dataset%>%select_("REVENUE","MOU","RECCHRGE","DIRECTAS","OVERAGE","ROAM","CHANGEM","CHANGER","DROPVCE","BLCKVCE","UNANSVCE","CUSTCARE","THREEWAY","MOUREC","OUTCALLS","INCALLS","PEAKVCE","OPEAKVCE","DROPBLK","CALLFWDV","CALLWAIT","AGE1","AGE2")
+head(Dataset_num,5)
+```
+
+## Converting categorical datset into factor and identify number of missing values in each feature by using describe function under "Hmisc" package ##
+```{r}
+Dataset_cat_factor=data.frame(lapply(Dataset_cat, as.factor))
+str(Dataset_cat_factor)
+
+#Missing values
+colSums(is.na(Dataset_cat_factor))
+```
+#There is only one column or calegorical variable, i.e., PHONES where we are getting missing values.
+
+## Replacement of NA from PHONES variable ##
+```{r}
+#Getting number of counts of number of handsets.
+table(Dataset_cat_factor$PHONES)
+
+#Replacing NA with 1. 
+Dataset_cat_factor$PHONES=is.na(Dataset_cat_factor$PHONES)<-1
+
+#Again checking for NA
+colSums(is.na(Dataset_cat_factor))
+```
+
+#Now, Categorical dataset is NA free.
+
+## Checking outliers for numeric dataset variables using Boxplot##
+```{r}
+boxplot(Dataset_num$REVENUE)
+boxplot(Dataset_num$MOU)
+boxplot(Dataset_num$RECCHRGE)
+boxplot(Dataset_num$DIRECTAS)
+boxplot(Dataset_num$OVERAGE)
+boxplot(Dataset_num$ROAM)
+boxplot(Dataset_num$CHANGEM)
+boxplot(Dataset_num$CHANGER)
+boxplot(Dataset_num$DROPVCE)
+boxplot(Dataset_num$BLCKVCE)
+boxplot(Dataset_num$UNANSVCE)
+boxplot(Dataset_num$CUSTCARE)
+boxplot(Dataset_num$THREEWAY)
+boxplot(Dataset_num$MOUREC)
+boxplot(Dataset_num$OUTCALLS)
+boxplot(Dataset_num$INCALLS)
+boxplot(Dataset_num$PEAKVCE)
+boxplot(Dataset_num$OPEAKVCE)
+boxplot(Dataset_num$DROPBLK)
+boxplot(Dataset_num$CALLFWDV)
+boxplot(Dataset_num$CALLWAIT)
+boxplot(Dataset_num$AGE1)
+boxplot(Dataset_num$AGE2)
+```
+
+## Replacing outliers from the first and third quartiles for each variable of numerical dataset.
+```{r}
+#For REVENUE
+upper_whisker_revenue <- quantile(Dataset_num$REVENUE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$REVENUE,0.75,na.rm=T)-quantile(Dataset_num$REVENUE,0.25,na.rm=T))
+upper_whisker_revenue
+
+Dataset_num$REVENUE[Dataset_num$REVENUE>upper_whisker_revenue]<-quantile(Dataset_num$REVENUE,0.75,na.rm=T)
+boxplot(Dataset_num$REVENUE, horizontal=T)
+
+#For MOU
+upper_whisker_MOU <- quantile(Dataset_num$MOU,0.75,na.rm=T)+1.5*(quantile(Dataset_num$MOU,0.75,na.rm=T)-quantile(Dataset_num$MOU,0.25,na.rm=T))
+upper_whisker_MOU
+
+Dataset_num$MOU[Dataset_num$MOU>upper_whisker_MOU]<-quantile(Dataset_num$MOU,0.75,na.rm=T)
+boxplot(Dataset_num$MOU, horizontal=T)
+
+#For RECCHRGE
+upper_whisker_RECCHRGE <- quantile(Dataset_num$RECCHRGE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$RECCHRGE,0.75,na.rm=T)-quantile(Dataset_num$RECCHRGE,0.25,na.rm=T))
+upper_whisker_RECCHRGE
+
+Dataset_num$RECCHRGE[Dataset_num$RECCHRGE>upper_whisker_RECCHRGE]<-quantile(Dataset_num$RECCHRGE,0.75,na.rm=T)
+boxplot(Dataset_num$RECCHRGE, horizontal=T)
+
+#For DIRECTAS
+upper_whisker_DIRECTAS <- quantile(Dataset_num$DIRECTAS,0.75,na.rm=T)+1.5*(quantile(Dataset_num$DIRECTAS,0.75,na.rm=T)-quantile(Dataset_num$DIRECTAS,0.25,na.rm=T))
+upper_whisker_DIRECTAS
+
+Dataset_num$DIRECTAS[Dataset_num$DIRECTAS>upper_whisker_DIRECTAS]<-quantile(Dataset_num$DIRECTAS,0.75,na.rm=T)
+boxplot(Dataset_num$DIRECTAS, horizontal=T)
+
+#For OVERAGE
+upper_whisker_OVERAGE <- quantile(Dataset_num$OVERAGE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$OVERAGE,0.75,na.rm=T)-quantile(Dataset_num$OVERAGE,0.25,na.rm=T))
+upper_whisker_OVERAGE
+
+Dataset_num$OVERAGE[Dataset_num$OVERAGE>upper_whisker_OVERAGE]<-quantile(Dataset_num$OVERAGE,0.75,na.rm=T)
+boxplot(Dataset_num$OVERAGE, horizontal=T)
+
+#For ROAM
+upper_whisker_ROAM <- quantile(Dataset_num$ROAM,0.75,na.rm=T)+1.5*(quantile(Dataset_num$ROAM,0.75,na.rm=T)-quantile(Dataset_num$ROAM,0.25,na.rm=T))
+upper_whisker_ROAM
+
+Dataset_num$ROAM[Dataset_num$ROAM>upper_whisker_ROAM]<-quantile(Dataset_num$ROAM,0.75,na.rm=T)
+boxplot(Dataset_num$ROAM, horizontal=T)
+
+#For CHANGEM
+upper_whisker_CHANGEM <- quantile(Dataset_num$CHANGEM,0.75,na.rm=T)+1.5*(quantile(Dataset_num$CHANGEM,0.75, na.rm=T)-quantile(Dataset_num$CHANGEM,0.25, na.rm=T))
+upper_whisker_CHANGEM
+
+Dataset_num$CHANGEM[Dataset_num$CHANGEM>upper_whisker_CHANGEM]<-quantile(Dataset_num$CHANGEM,0.75, na.rm = T)
+
+lower_whisker_CHANGEM <- quantile(Dataset_num$CHANGEM,0.25,na.rm=T)-1.5*(quantile(Dataset_num$CHANGEM,0.75,na.rm=T)-quantile(Dataset_num$CHANGEM,0.25, na.rm=T))
+lower_whisker_CHANGEM
+
+Dataset_num$CHANGEM[Dataset_num$CHANGEM<lower_whisker_CHANGEM]<-quantile(Dataset_num$CHANGEM,0.25, na.rm=T)
+
+boxplot(Dataset_num$CHANGEM, horizontal=T)
+
+#For CHANGER
+upper_whisker_CHANGER <- quantile(Dataset_num$CHANGER,0.75,na.rm=T)+1.5*(quantile(Dataset_num$CHANGER,0.75, na.rm=T)-quantile(Dataset_num$CHANGER,0.25, na.rm=T))
+upper_whisker_CHANGER
+
+Dataset_num$CHANGER[Dataset_num$CHANGER>upper_whisker_CHANGER]<-quantile(Dataset_num$CHANGER,0.75, na.rm = T)
+
+lower_whisker_CHANGER <- quantile(Dataset_num$CHANGER,0.25,na.rm=T)-1.5*(quantile(Dataset_num$CHANGER,0.75,na.rm=T)-quantile(Dataset_num$CHANGER,0.25, na.rm=T))
+lower_whisker_CHANGER
+
+Dataset_num$CHANGER[Dataset_num$CHANGER<lower_whisker_CHANGER]<-quantile(Dataset_num$CHANGER,0.25, na.rm=T)
+
+boxplot(Dataset_num$CHANGER, horizontal=T)
+
+#For DROPVCE
+upper_whisker_DROPVCE <- quantile(Dataset_num$DROPVCE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$DROPVCE,0.75, na.rm=T)-quantile(Dataset_num$DROPVCE,0.25, na.rm=T))
+upper_whisker_DROPVCE
+
+Dataset_num$DROPVCE[Dataset_num$DROPVCE>upper_whisker_DROPVCE]<-quantile(Dataset_num$DROPVCE,0.75, na.rm = T)
+
+lower_whisker_DROPVCE <- quantile(Dataset_num$DROPVCE,0.25,na.rm=T)-1.5*(quantile(Dataset_num$DROPVCE,0.75,na.rm=T)-quantile(Dataset_num$DROPVCE,0.25, na.rm=T))
+lower_whisker_DROPVCE
+
+Dataset_num$DROPVCE[Dataset_num$DROPVCE<lower_whisker_DROPVCE]<-quantile(Dataset_num$DROPVCE,0.25, na.rm=T)
+
+boxplot(Dataset_num$DROPVCE, horizontal=T)
+
+#For BLCKVCE
+upper_whisker_BLCKVCE <- quantile(Dataset_num$BLCKVCE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$BLCKVCE,0.75, na.rm=T)-quantile(Dataset_num$BLCKVCE,0.25, na.rm=T))
+upper_whisker_BLCKVCE
+
+Dataset_num$BLCKVCE[Dataset_num$BLCKVCE>upper_whisker_BLCKVCE]<-quantile(Dataset_num$BLCKVCE,0.75, na.rm = T)
+
+lower_whisker_BLCKVCE <- quantile(Dataset_num$BLCKVCE,0.25,na.rm=T)-1.5*(quantile(Dataset_num$BLCKVCE,0.75,na.rm=T)-quantile(Dataset_num$BLCKVCE,0.25, na.rm=T))
+lower_whisker_BLCKVCE
+
+Dataset_num$BLCKVCE[Dataset_num$BLCKVCE<lower_whisker_BLCKVCE]<-quantile(Dataset_num$BLCKVCE,0.25, na.rm=T)
+
+boxplot(Dataset_num$BLCKVCE, horizontal=T)
+
+#For UNANSVCE
+upper_whisker_UNANSVCE <- quantile(Dataset_num$UNANSVCE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$UNANSVCE,0.75, na.rm=T)-quantile(Dataset_num$UNANSVCE,0.25, na.rm=T))
+upper_whisker_UNANSVCE
+
+Dataset_num$UNANSVCE[Dataset_num$UNANSVCE>upper_whisker_UNANSVCE]<-quantile(Dataset_num$UNANSVCE,0.75, na.rm = T)
+
+boxplot(Dataset_num$BLCKVCE, horizontal=T)
+
+#For CUSTCARE
+upper_whisker_CUSTCARE <- quantile(Dataset_num$CUSTCARE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$CUSTCARE,0.75, na.rm=T)-quantile(Dataset_num$CUSTCARE,0.25, na.rm=T))
+upper_whisker_CUSTCARE
+
+Dataset_num$CUSTCARE[Dataset_num$CUSTCARE>upper_whisker_CUSTCARE]<-quantile(Dataset_num$CUSTCARE,0.75, na.rm = T)
+
+boxplot(Dataset_num$CUSTCARE, horizontal=T)
+
+#For THREEWAY
+upper_whisker_THREEWAY <- quantile(Dataset_num$THREEWAY,0.75,na.rm=T)+1.5*(quantile(Dataset_num$THREEWAY,0.75, na.rm=T)-quantile(Dataset_num$THREEWAY,0.25, na.rm=T))
+upper_whisker_THREEWAY
+
+Dataset_num$THREEWAY[Dataset_num$THREEWAY>upper_whisker_THREEWAY]<-quantile(Dataset_num$THREEWAY,0.75, na.rm = T)
+
+boxplot(Dataset_num$THREEWAY, horizontal=T)
+
+#For MOUREC
+upper_whisker_MOUREC <- quantile(Dataset_num$MOUREC,0.75,na.rm=T)+1.5*(quantile(Dataset_num$MOUREC,0.75, na.rm=T)-quantile(Dataset_num$MOUREC,0.25, na.rm=T))
+upper_whisker_MOUREC
+
+Dataset_num$MOUREC[Dataset_num$MOUREC>upper_whisker_MOUREC]<-quantile(Dataset_num$MOUREC,0.75, na.rm = T)
+
+boxplot(Dataset_num$MOUREC, horizontal=T)
+
+#For OUTCALLS
+upper_whisker_OUTCALLS <- quantile(Dataset_num$OUTCALLS,0.75,na.rm=T)+1.5*(quantile(Dataset_num$OUTCALLS,0.75, na.rm=T)-quantile(Dataset_num$OUTCALLS,0.25, na.rm=T))
+upper_whisker_OUTCALLS
+
+Dataset_num$OUTCALLS[Dataset_num$OUTCALLS>upper_whisker_OUTCALLS]<-quantile(Dataset_num$OUTCALLS,0.75, na.rm = T)
+
+boxplot(Dataset_num$OUTCALLS, horizontal=T)
+
+#For INCALLS
+upper_whisker_INCALLS <- quantile(Dataset_num$INCALLS,0.75,na.rm=T)+1.5*(quantile(Dataset_num$INCALLS,0.75, na.rm=T)-quantile(Dataset_num$INCALLS,0.25, na.rm=T))
+upper_whisker_INCALLS
+
+Dataset_num$INCALLS[Dataset_num$INCALLS>upper_whisker_INCALLS]<-quantile(Dataset_num$INCALLS,0.75, na.rm = T)
+
+boxplot(Dataset_num$INCALLS, horizontal=T)
+
+#For PEAKVCE
+upper_whisker_PEAKVCE <- quantile(Dataset_num$PEAKVCE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$PEAKVCE,0.75, na.rm=T)-quantile(Dataset_num$PEAKVCE,0.25, na.rm=T))
+upper_whisker_PEAKVCE
+
+Dataset_num$PEAKVCE[Dataset_num$PEAKVCE>upper_whisker_PEAKVCE]<-quantile(Dataset_num$PEAKVCE,0.75, na.rm = T)
+
+boxplot(Dataset_num$PEAKVCE, horizontal=T)
+
+#For OPEAKVCE
+upper_whisker_OPEAKVCE <- quantile(Dataset_num$OPEAKVCE,0.75,na.rm=T)+1.5*(quantile(Dataset_num$OPEAKVCE,0.75, na.rm=T)-quantile(Dataset_num$OPEAKVCE,0.25, na.rm=T))
+upper_whisker_OPEAKVCE
+
+Dataset_num$OPEAKVCE[Dataset_num$OPEAKVCE>upper_whisker_OPEAKVCE]<-quantile(Dataset_num$OPEAKVCE,0.75, na.rm = T)
+
+boxplot(Dataset_num$OPEAKVCE, horizontal=T)
+
+#For DROPBLK
+upper_whisker_DROPBLK <- quantile(Dataset_num$DROPBLK,0.75,na.rm=T)+1.5*(quantile(Dataset_num$DROPBLK,0.75, na.rm=T)-quantile(Dataset_num$DROPBLK,0.25, na.rm=T))
+upper_whisker_DROPBLK
+
+Dataset_num$DROPBLK[Dataset_num$DROPBLK>upper_whisker_DROPBLK]<-quantile(Dataset_num$DROPBLK,0.75, na.rm = T)
+
+boxplot(Dataset_num$DROPBLK, horizontal=T)
+
+#For CALLWAIT
+upper_whisker_CALLWAIT <- quantile(Dataset_num$CALLWAIT,0.75,na.rm=T)+1.5*(quantile(Dataset_num$CALLWAIT,0.75, na.rm=T)-quantile(Dataset_num$CALLWAIT,0.25, na.rm=T))
+upper_whisker_CALLWAIT
+
+Dataset_num$CALLWAIT[Dataset_num$CALLWAIT>upper_whisker_CALLWAIT]<-quantile(Dataset_num$CALLWAIT,0.75, na.rm = T)
+
+boxplot(Dataset_num$CALLWAIT, horizontal=T)
+
+```
+
+## Checking NA's for numberical dataset ##
+```{r}
+colSums(is.na(Dataset_num))
+```
+
+#There are few variables such as "REVENUE", "MOU", "RECCHRGE","DIRECTAS","OVERAGE","ROAM"  ,"CHANGEM","CHANGER", "AGE1", and "AGE2" where we are getting NA's.
+
+## Missing Value treatment
+```{r}
+#Treat the missing values for REVENUE
+mean(Dataset_num$REVENUE, na.rm=T)
+
+Dataset_num$REVENUE= ifelse(is.na(Dataset_num$REVENUE),
+                            mean(Dataset_num$REVENUE, na.rm = T),Dataset_num$REVENUE)
+any(is.na(Dataset_num$REVENUE))
+
+#Treat the missing values for "MOU"
+mean(Dataset_num$MOU, na.rm=T)
+
+Dataset_num$MOU= ifelse(is.na(Dataset_num$MOU),
+                            mean(Dataset_num$MOU, na.rm = T),Dataset_num$MOU)
+any(is.na(Dataset_num$MOU))
+
+#Treat the missing values for "RECCHRGE"
+mean(Dataset_num$RECCHRGE, na.rm=T)
+
+Dataset_num$RECCHRGE= ifelse(is.na(Dataset_num$RECCHRGE),
+                            mean(Dataset_num$RECCHRGE, na.rm = T),Dataset_num$RECCHRGE)
+any(is.na(Dataset_num$RECCHRGE))
+
+#Treat the missing values for "DIRECTAS"
+mean(Dataset_num$DIRECTAS, na.rm=T)
+
+Dataset_num$DIRECTAS= ifelse(is.na(Dataset_num$DIRECTAS),
+                            mean(Dataset_num$DIRECTAS, na.rm = T),Dataset_num$DIRECTAS)
+any(is.na(Dataset_num$DIRECTAS))
+
+#Treat the missing values for "OVERAGE"
+mean(Dataset_num$OVERAGE, na.rm=T)
+
+Dataset_num$OVERAGE= ifelse(is.na(Dataset_num$OVERAGE),
+                            mean(Dataset_num$OVERAGE, na.rm = T),Dataset_num$OVERAGE)
+any(is.na(Dataset_num$OVERAGE))
+
+#Treat the missing values for "ROAM"
+mean(Dataset_num$ROAM, na.rm=T)
+
+Dataset_num$ROAM= ifelse(is.na(Dataset_num$ROAM),
+                            mean(Dataset_num$ROAM, na.rm = T),Dataset_num$ROAM)
+any(is.na(Dataset_num$ROAM))
+
+#Treat the missing values for "CHANGEM"
+mean(Dataset_num$CHANGEM, na.rm=T)
+
+Dataset_num$CHANGEM= ifelse(is.na(Dataset_num$CHANGEM),
+                            mean(Dataset_num$CHANGEM, na.rm = T),Dataset_num$CHANGEM)
+any(is.na(Dataset_num$CHANGEM))
+
+#Treat the missing values for "CHANGER"
+mean(Dataset_num$CHANGER, na.rm=T)
+
+Dataset_num$CHANGER= ifelse(is.na(Dataset_num$CHANGER),
+                            mean(Dataset_num$CHANGER, na.rm = T),Dataset_num$CHANGER)
+any(is.na(Dataset_num$CHANGER))
+
+#Treat the missing values for "AGE1"
+mean(Dataset_num$AGE1, na.rm=T)
+
+Dataset_num$AGE1= ifelse(is.na(Dataset_num$AGE1),
+                            mean(Dataset_num$AGE1, na.rm = T),Dataset_num$AGE1)
+any(is.na(Dataset_num$AGE1))
+
+#Treat the missing values for "AGE2"
+mean(Dataset_num$AGE2, na.rm=T)
+
+Dataset_num$AGE2= ifelse(is.na(Dataset_num$AGE2),
+                            mean(Dataset_num$AGE2, na.rm = T),Dataset_num$AGE2)
+any(is.na(Dataset_num$AGE2))
+
+```
+## Again checking numerical dataset for NA's ##
+```{r}
+colSums(is.na(Dataset_num))
+```
+#Now, numerical dataset is free from NA's.
+
+## Combining numerical and categorical data sets ##
+```{r}
+dataset_combined = cbind(Dataset_num,Dataset_cat_factor)
+View(dataset_combined)
+
+```
+
+## Fitting Logistic regression model ##
+```{r}
+Model_logistic_1 = glm(CHURN~.,data=dataset_combined,family = binomial(logit))
+summary(Model_logistic_1)
+```
+
+## Fitting model only with significant features ##
+```{r}
+Model_logistic_2 = glm(CHURN~REVENUE+MOU+RECCHRGE+OVERAGE+ROAM+CHANGEM+CHANGER+DROPVCE+UNANSVCE+CUSTCARE+THREEWAY+INCALLS+PEAKVCE
++AGE1+AGE2+CHILDREN+CREDITA+CREDITAA+CREDITB+CREDITDE+REFURB+WEBCAP+MARRYUN+MARRYYES+RETCALL+NEWCELLY+SETPRCM+CALIBRAT
+,data=dataset_combined,family = binomial(logit))
+summary(Model_logistic_2)
+
+```
+
+## Correlation Matrix ##
+```{r}
+corr_mat=cor(dataset_combined[,c("REVENUE","MOU","RECCHRGE","OVERAGE","ROAM","CHANGEM","CHANGER","DROPVCE","UNANSVCE","CUSTCARE","THREEWAY","INCALLS","PEAKVCE","AGE1","AGE2")])
+corr_mat
+```
+
+#Detection and Removal of Multicollinearity using Variance Inflation Factors.
+#Detection: As a rule of thumb if VIF_j > 5 or 10 then x_j can be taken to have strong linear relationship with the other regressiors.
+
+## Removal: Deleting the corresponding x_j's will solve the problem ##
+```{r}
+library(car)
+vif(Model_logistic_2)
+```
+#Dropping the "REVENUE" explanatory variable from the dataset_cobined because VIF > 10.(Assuming Threshold VIF = 10).
+
+## Fitting model without "REVENUE" explanatory variable ##
+```{r}
+Model_logistic_3 = glm(CHURN~MOU+RECCHRGE+OVERAGE+ROAM+CHANGEM+CHANGER+DROPVCE+UNANSVCE+CUSTCARE+THREEWAY+INCALLS+PEAKVCE
++AGE1+AGE2+CHILDREN+CREDITA+CREDITAA+CREDITB+CREDITDE+REFURB+WEBCAP+MARRYUN+MARRYYES+RETCALL+NEWCELLY+SETPRCM+CALIBRAT
+,data=dataset_combined,family = binomial(logit))
+summary(Model_logistic_3)
+```
+## New dataset without multicollinearity ##
+```{r}
+library(dplyr)
+Dataset_new =dataset_combined %>%select_("MOU","RECCHRGE","OVERAGE","ROAM","CHANGEM","CHANGER","DROPVCE","UNANSVCE","CUSTCARE","THREEWAY","INCALLS","PEAKVCE","AGE1","AGE2","CHILDREN","CREDITA","CREDITAA","CREDITB","CREDITDE","REFURB","WEBCAP","MARRYUN","MARRYYES","RETCALL","NEWCELLY","SETPRCM","CALIBRAT", "CHURN")
+head(Dataset_new,5)
+```
+
+##Splitting data into Training (Development) and Testing (Validation) Dataset
+#install.packages("caTools")
+#Caret package that we can use to split the data
+#This is a package we use to break the data into training and test.
+```{r}
+library(caTools)
+set.seed(123)
+
+split= sample.split(Dataset_new$CHURN,SplitRatio = 2/3)
+
+train_dataset=subset(Dataset_new, split==T)
+
+test_dataset=subset(Dataset_new, split==F)
+```
+
+##  IMPLEMENTING LOGISTIC REGRESSION ##
+```{r}
+Final_model = glm(CHURN~.,data = train_dataset,family = binomial(logit))
+summary(Final_model)
+```
+
+## Coming Up with the Predicted Probabilities for test_dataset
+```{r}
+CHURNDEP=predict(Final_model,newdata = test_dataset, type="response")
+head(CHURNDEP,10)
+
+test_dataset$CHURNDEP = CHURNDEP
+View(test_dataset)
+```
+
+## CONCORDANCE ##
+```{r}
+library(Metrics)
+#install.packages("InformationValue")
+library(InformationValue)
+
+# Concordance
+Concordance(test_dataset$CHURN,test_dataset$CHURNDEP)
+```
+#The concordance value is 83% (approx.). The concordance value indicates that model fit is good.
+
+## AUC ##
+```{r}
+#install.packages("pROC")
+library(pROC)
+roc_obj <- roc(test_dataset$CHURN, test_dataset$CHURNDEP)
+roc_obj
+auc(roc_obj)
+```
+#The Area Under the Curve (AUC) is the measure of the ability of a classifier to distinguish between classes and is used as a summary of the ROC curve. The higher the AUC, the better the performance of the model at distinguishing between the positive and negative classes.
+#Model performance is good with 83% (approx.) accuracy.
+
+## FINDING THE BEST VALUE OF THRESHOLD ##
+```{r}
+# Method: pROC
+roc_obj <- roc(test_dataset$CHURN, test_dataset$CHURNDEP)
+plot(roc_obj)
+x <- coords(roc_obj, "best", "threshold", transpose = TRUE)
+x
+```
+#We consider the threshold value  0.1283726.
+
+## Labelling ##
+```{r}
+test_dataset$CHURNDEP <- ifelse(test_dataset$CHURNDEP > 0.1283726,1,0)
+head(test_dataset,5)
+```
+
+## Confusion Matrix ##
+```{r}
+#install.packages("caret")
+library(caret)
+confusionMatrix(as.factor(test_dataset$CHURNDEP), as.factor(test_dataset$CHURN))
+```
+## Computation of sensitivity and specificity ##
+```{r}
+# Senstivity
+Senstivity = sensitivity(as.factor(test_dataset$CHURNDEP),as.factor(test_dataset$CHURN))
+Senstivity
+# Specificity
+specificity = specificity(as.factor(test_dataset$CHURNDEP),as.factor(test_dataset$CHURN))
+specificity
+```
+#Sensitivity and specificity should be as large as possible.
+
+## F1 Score ##
+```{r}
+#install.packages("MLmetrices")
+library(MLmetrics)
+
+F1_Score(test_dataset$CHURN, test_dataset$CHURNDEP)
+```
+
+#Decision Rule: 
+
+#F1 score = 0; Model is bad.
+
+#F1 score !=0, > 0; Model is good.
+
+#F1 score = 1; Perfect Model.
+
+#Therefore, The model fitting is good with 75% F1 score.
+
+## CONCLUSION ##
+
+#The key factors are "MOU", "RECCHRGE", "OVERAGE", "ROAM", "CHANGEM", "CHANGER", "DROPVCE", "UNANSVCE", "CUSTCARE", "THREEWAY", "INCALLS", "PEAKVCE", "AGE1", "AGE2"    , "CHILDREN", "CREDITA", "CREDITAA", "CREDITB", "CREDITDE", "REFURB", "WEBCAP", "MARRYUN", "MARRYYES", "RETCALL", "NEWCELLY", "SETPRCM", "CALIBRAT", "CHURN"   ,"CHURNDEP". These are imporatant factor or significant variables for the prediction of customer churn or customer attrition. These factors can lead to customer attrition. Customer attrition happens when a business losses a customer for whatever reason. It is a normal part of the customer life cycle. By actively tracking customers on the basis of the determined factors, we can take a proactive approach to identify the reason why a customer is leaving and win them back. This insight is also very useful to understand the demand trends in the market and ensure that customers are happy and less likely to churn.
+
+
