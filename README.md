@@ -1,2 +1,2 @@
-# Logistic-Regression-Business-Case-
+# Logistic-Regression-Business-Case
 Proactive Attrition Management
