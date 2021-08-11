@@ -10,7 +10,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Inpoting the Data set##
+## Import the Data set##
 ```{r}
 Dataset<-read.csv("Proactive Attrition Management-Logistic Regression Case Study.csv")
 View(Dataset)
